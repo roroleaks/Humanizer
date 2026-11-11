@@ -140,7 +140,7 @@ export default function ManuscriptDetailPage({
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  async function loadData() {
+  const loadData = React.useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/manuscripts/${id}`);
@@ -165,7 +165,8 @@ export default function ManuscriptDetailPage({
     } finally {
       setIsLoading(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     loadData();
@@ -174,7 +175,7 @@ export default function ManuscriptDetailPage({
         eventSourceRef.current.close();
       }
     };
-  }, [id]);
+  }, [loadData]);
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId) || sections[0];
 

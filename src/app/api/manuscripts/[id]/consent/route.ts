@@ -31,12 +31,12 @@ export async function POST(
     await refinementRepository.recordConsent(manuscriptId, consentedDate);
 
     // Record processing event without manuscript content
-    await processingEventRepository.recordEvent({
+    await processingEventRepository.logEvent(
       manuscriptId,
-      eventType: 'refinement_consent_granted',
-      eventSeverity: 'info',
-      detail: `Consent granted for refinement via primary provider ${primaryProvider}. Fallbacks: ${fallbacks.join(', ')}.`,
-    });
+      'refinement_consent_granted',
+      'info',
+      `Consent granted for refinement via primary provider ${primaryProvider}. Fallbacks: ${fallbacks.join(', ')}.`
+    );
 
     return NextResponse.json({
       consentedAt: consentedDate.toISOString(),
