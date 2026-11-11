@@ -154,7 +154,7 @@ export default function HelpPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navyPrimary">What happens during refinement</h3>
                 <ul className="list-disc list-inside space-y-1 text-xs text-neutral-textSecondary pl-1">
                   <li>The full manuscript text is sent to the selected AI provider via secure API connections.</li>
-                  <li>The provider's commercial data-retention policy applies to the text while it is processed by them.</li>
+                  <li>The provider&apos;s commercial data-retention policy applies to the text while it is processed by them.</li>
                   <li>Refined text is stored on this server alongside the original; the original manuscript remains strictly immutable and is never modified.</li>
                   <li>Numerical values, clinical endpoints, dosages, citations, and references are instructed to be preserved; Phase 5 automated validation verifies this.</li>
                   <li>Provider switching and failovers are visibly disclosed in real time.</li>
