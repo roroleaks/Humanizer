@@ -81,6 +81,10 @@ export interface RefinedParagraph {
   refinedText: string;
   changeLevel: 'unchanged' | 'minor' | 'major';
   flags: RefinementFlag[];
+  /** Provider that generated this paragraph's refinement (optional runtime metadata). */
+  providerUsed?: string;
+  /** Model that generated this paragraph's refinement (optional runtime metadata). */
+  modelUsed?: string;
 }
 
 /**
@@ -88,8 +92,13 @@ export interface RefinedParagraph {
  */
 export interface RefinementResult {
   manuscriptId: string;
-  jobId: string;
-  refinedParagraphs: RefinedParagraph[];
+  jobId?: string;
+  /** Alias: refined paragraph list */
+  paragraphs?: RefinedParagraph[];
+  /** Canonical field name for refined paragraph list */
+  refinedParagraphs?: RefinedParagraph[];
+  /** Flat list of all flags across paragraphs */
+  flags?: RefinementFlag[];
   styleProfileUsed: ManuscriptStyleProfile;
   intensityUsed: RefinementIntensity;
   providerName: string;

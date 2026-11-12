@@ -407,7 +407,7 @@ export default function ManuscriptDetailPage({
     );
   }
 
-  const allFlags = refinementResult?.flags || completedChunksList.flatMap((c) => c.flags);
+  const allFlags = refinementResult?.refinedParagraphs?.flatMap((p) => p.flags) || completedChunksList.flatMap((c) => c.flags);
 
   return (
     <div className="space-y-6">
@@ -784,7 +784,7 @@ export default function ManuscriptDetailPage({
                                 </span>
                               </div>
                               <div className="font-serif text-slate-900 text-sm leading-relaxed whitespace-pre-wrap">
-                                {refinementResult.paragraphs.find((p) => p.id.includes(selectedSection.id))?.refinedText ||
+                                {(refinementResult.refinedParagraphs || refinementResult.paragraphs || []).find((p) => p.id.includes(selectedSection.id))?.refinedText ||
                                   selectedSection.content}
                               </div>
                             </div>

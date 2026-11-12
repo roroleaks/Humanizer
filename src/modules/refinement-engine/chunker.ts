@@ -295,10 +295,9 @@ export class SemanticChunker implements Chunker {
           precedingSectionSummary: precedingSummary || undefined,
           followingSectionSummary: followingSummary || undefined,
           protectedInventory: {
-            terms: [],
-            units: [],
-            numbers: [],
-            citations: [],
+            manuscriptId: '',
+            items: [],
+            createdAt: new Date().toISOString(),
           },
         },
         sharedReferenceMarkers: chunk.sharedMarkers,

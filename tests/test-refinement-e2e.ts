@@ -23,9 +23,9 @@ class SyntheticTestAdapter implements StreamingAIProviderAdapter {
 
   async health(): Promise<ProviderHealth> {
     return {
-      providerName: 'gemini',
+      name: 'gemini',
       status: 'healthy',
-      checkedAt: new Date().toISOString(),
+      lastCheckedAt: new Date().toISOString(),
     };
   }
 
@@ -35,7 +35,8 @@ class SyntheticTestAdapter implements StreamingAIProviderAdapter {
       providerName: 'gemini',
       modelUsed: 'synthetic-gemini-pro',
       tokensUsed: 50,
-      cachedTokens: 0,
+      finishReason: 'stop',
+      warnings: [],
     };
   }
 
@@ -47,7 +48,7 @@ class SyntheticTestAdapter implements StreamingAIProviderAdapter {
       tokensSoFar: 25,
       providerName: 'gemini',
       modelUsed: 'synthetic-gemini-pro',
-      streaming: true,
+      streaming: 'simulated',
     };
     yield {
       delta: input.textToRefine.slice(half),
@@ -55,7 +56,7 @@ class SyntheticTestAdapter implements StreamingAIProviderAdapter {
       tokensSoFar: 50,
       providerName: 'gemini',
       modelUsed: 'synthetic-gemini-pro',
-      streaming: true,
+      streaming: 'simulated',
     };
   }
 }
@@ -143,7 +144,7 @@ async function runE2ETest() {
     } else if (event.type === 'chunk_completed') {
       console.log(` -> Event: chunk_completed (change: ${event.changeLevel})`);
     } else if (event.type === 'job_completed') {
-      console.log(` -> Event: job_completed (result paragraphs: ${event.result.paragraphs.length})`);
+      console.log(` -> Event: job_completed (result paragraphs: ${(event.result.paragraphs || event.result.refinedParagraphs || []).length})`);
     }
   }
 
@@ -168,10 +169,10 @@ async function runE2ETest() {
 
   // 6. Verify Results
   const results = await refinementEngine.getJobResults(plan.jobId);
-  if (!results || results.paragraphs.length === 0) {
+  if (!results || (results.paragraphs || results.refinedParagraphs || []).length === 0) {
     throw new Error('Refinement results empty');
   }
-  console.log(`[PASS] Refinement results retrieved successfully: ${results.paragraphs.length} paragraphs refined`);
+  console.log(`[PASS] Refinement results retrieved successfully: ${(results.paragraphs || results.refinedParagraphs || []).length} paragraphs refined`);
 
   console.log('\n--- All End-to-End Tests Succeeded ---');
 }

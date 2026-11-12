@@ -133,7 +133,7 @@ async function runTests() {
       sectionType: 'results',
       precedingSectionSummary: 'Prior methods detailed trial design.',
       followingSectionSummary: 'Subsequent discussion contextualized clinical endpoints.',
-      protectedInventory: { terms: [], units: [], numbers: [], citations: [] },
+      protectedInventory: { manuscriptId: '', items: [], createdAt: new Date().toISOString() },
     },
     sharedReferenceMarkers: ['Table 1'],
   };

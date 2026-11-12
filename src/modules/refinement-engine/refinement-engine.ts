@@ -209,10 +209,9 @@ export class DefaultRefinementEngine implements RefinementEngine {
           precedingSectionSummary: prevText ? summarizeAdjacentText(prevText) : undefined,
           followingSectionSummary: nextText ? summarizeAdjacentText(nextText) : undefined,
           protectedInventory: {
-            terms: [],
-            units: [],
-            numbers: [],
-            citations: [],
+            manuscriptId: job.manuscriptId,
+            items: [],
+            createdAt: new Date().toISOString(),
           },
         },
         sharedReferenceMarkers: [],
@@ -225,6 +224,8 @@ export class DefaultRefinementEngine implements RefinementEngine {
       );
 
       const refineRequest: RefinementRequest = {
+        manuscriptId: job.manuscriptId,
+        chunkId: chunk.id,
         sectionContext: chunkPlan.context,
         textToRefine: chunkPlan.originalText,
         protectedInventory: chunkPlan.context.protectedInventory,
@@ -257,12 +258,12 @@ export class DefaultRefinementEngine implements RefinementEngine {
                 reason: 'Primary provider unavailable or rate-limited; failed over to fallback.',
               };
 
-              await processingEventRepository.recordEvent({
-                manuscriptId: job.manuscriptId,
-                eventType: 'provider_failover',
-                eventSeverity: 'warning',
-                detail: `Failover from ${currentProvider} to ${chunkProvider} during chunk ${chunk.chunkIndex}.`,
-              });
+              await processingEventRepository.logEvent(
+                job.manuscriptId,
+                'provider_failover',
+                'warning',
+                `Failover from ${currentProvider} to ${chunkProvider} during chunk ${chunk.chunkIndex}.`
+              );
             }
 
             currentProvider = chunkProvider;
@@ -436,15 +437,13 @@ export class DefaultRefinementEngine implements RefinementEngine {
         refinedText: chunk.refinedText || chunk.originalText,
         changeLevel: (chunk.changeLevel as any) || 'unchanged',
         flags,
-        providerUsed: chunk.providerUsed || lastProvider,
-        modelUsed: chunk.modelUsed || lastModel,
       });
     }
 
     return {
       manuscriptId: job.manuscriptId,
-      paragraphs,
-      flags: allFlags,
+      jobId,
+      refinedParagraphs: paragraphs,
       styleProfileUsed: job.styleProfile as ManuscriptStyleProfile,
       intensityUsed: job.intensity as RefinementIntensity,
       providerName: lastProvider,
