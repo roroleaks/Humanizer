@@ -140,7 +140,7 @@ export type RefinementProgressEvent =
   | { type: 'job_started'; jobId: string; totalChunks: number }
   | { type: 'chunk_started'; chunkId: string; chunkIndex: number; providerName: AIProviderName; modelUsed: string }
   | { type: 'chunk_delta'; chunkId: string; delta: string; tokensSoFar: number }
-  | { type: 'chunk_completed'; chunkId: string; refinedText: string; changeLevel: 'unchanged' | 'minor' | 'major'; flags: RefinementFlag[] }
+  | { type: 'chunk_completed'; chunkId: string; chunkIndex?: number; sectionId?: string; refinedText: string; changeLevel: 'unchanged' | 'minor' | 'major'; flags: RefinementFlag[] }
   | { type: 'chunk_failed'; chunkId: string; reason: string }
   | { type: 'provider_failover'; chunkId: string; fromProvider: AIProviderName; toProvider: AIProviderName; reason: string }
   | { type: 'job_completed'; jobId: string; result: RefinementResult }

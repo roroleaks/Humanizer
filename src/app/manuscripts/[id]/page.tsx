@@ -180,9 +180,10 @@ export default function ManuscriptDetailPage({
 
   useEffect(() => {
     loadData();
+    const sse = eventSourceRef.current;
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
+      if (sse) {
+        sse.close();
       }
     };
   }, [loadData]);
