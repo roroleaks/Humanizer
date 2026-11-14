@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'url';
 import {
   parseDocx,
   parsePdf,
@@ -10,6 +12,9 @@ import {
   manuscriptRepository,
   processingEventRepository,
 } from '../src/lib/storage/repositories';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runVerification() {
   console.log('=== STARTING PHASE 2 INTAKE & DECOMPOSITION VERIFICATION ===\n');
@@ -28,7 +33,8 @@ async function runVerification() {
 
   // 1. DOCX Intake Test
   console.log('\n--- 1. Testing DOCX Intake ---');
-  const docxSamplePath = 'C:\\Users\\raouf.RAOUFDESKTOP\\.gemini\\antigravity\\scratch\\Martinez_2022_Hypertension_Trial.docx';
+  const docxSamplePath = path.resolve(__dirname, 'fixtures', 'sample_synthetic.docx');
+  assert(fs.existsSync(docxSamplePath), 'DOCX fixture exists', `Missing fixture at ${docxSamplePath}`);
   if (fs.existsSync(docxSamplePath)) {
     const docxBuffer = fs.readFileSync(docxSamplePath);
     const docxId = crypto.randomUUID();
@@ -36,7 +42,7 @@ async function runVerification() {
       const parsedDocx = await parseDocx({
         manuscriptId: docxId,
         buffer: docxBuffer,
-        originalFilename: 'Martinez_2022_Hypertension_Trial.docx',
+        originalFilename: 'sample_synthetic.docx',
       });
 
       assert(parsedDocx.sourceType === 'docx', 'DOCX sourceType is docx');
@@ -46,9 +52,9 @@ async function runVerification() {
       // Persist DOCX
       await manuscriptRepository.createManuscript({
         id: docxId,
-        title: parsedDocx.metadata?.title || 'Martinez 2022',
+        title: parsedDocx.metadata?.title || 'Synthetic DOCX Trial',
         sourceType: 'docx',
-        originalFilename: 'Martinez_2022_Hypertension_Trial.docx',
+        originalFilename: 'sample_synthetic.docx',
         pageCount: parsedDocx.pageCount,
         pageCountConfidence: parsedDocx.pageCountConfidence,
         wordCount: parsedDocx.rawText.split(/\s+/).filter(Boolean).length,
@@ -78,13 +84,12 @@ async function runVerification() {
     } catch (err: any) {
       assert(false, 'DOCX parsing failed', err.message);
     }
-  } else {
-    console.warn('DOCX sample file not found at:', docxSamplePath);
   }
 
   // 2. PDF Intake Test
   console.log('\n--- 2. Testing PDF Intake ---');
-  const pdfSamplePath = 'C:\\Users\\raouf.RAOUFDESKTOP\\.gemini\\antigravity\\scratch\\Chen_2023_RCT_SGLT2.pdf';
+  const pdfSamplePath = path.resolve(__dirname, 'fixtures', 'sample_synthetic.pdf');
+  assert(fs.existsSync(pdfSamplePath), 'PDF fixture exists', `Missing fixture at ${pdfSamplePath}`);
   if (fs.existsSync(pdfSamplePath)) {
     const pdfBuffer = fs.readFileSync(pdfSamplePath);
     const pdfId = crypto.randomUUID();
@@ -92,7 +97,7 @@ async function runVerification() {
       const parsedPdf = await parsePdf({
         manuscriptId: pdfId,
         buffer: pdfBuffer,
-        originalFilename: 'Chen_2023_RCT_SGLT2.pdf',
+        originalFilename: 'sample_synthetic.pdf',
       });
 
       assert(parsedPdf.sourceType === 'pdf', 'PDF sourceType is pdf');
@@ -102,9 +107,9 @@ async function runVerification() {
       // Persist PDF
       await manuscriptRepository.createManuscript({
         id: pdfId,
-        title: parsedPdf.metadata?.title || 'Chen 2023',
+        title: parsedPdf.metadata?.title || 'Synthetic PDF Trial',
         sourceType: 'pdf',
-        originalFilename: 'Chen_2023_RCT_SGLT2.pdf',
+        originalFilename: 'sample_synthetic.pdf',
         pageCount: parsedPdf.pageCount,
         pageCountConfidence: parsedPdf.pageCountConfidence,
         wordCount: parsedPdf.rawText.split(/\s+/).filter(Boolean).length,
@@ -120,8 +125,6 @@ async function runVerification() {
     } catch (err: any) {
       assert(false, 'PDF parsing failed', err.message);
     }
-  } else {
-    console.warn('PDF sample file not found at:', pdfSamplePath);
   }
 
   // 3. Plain Text Intake Test
