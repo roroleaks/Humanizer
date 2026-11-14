@@ -205,7 +205,30 @@ export async function parseUrl(options: UrlFetchOptions): Promise<ParsedDocument
     }
   }
 
-  const elements = Array.from(articleDoc.body.children);
+  // Extract structural block elements, traversing any Readability/CMS container divs
+  function extractBlockElements(root: Element): Element[] {
+    const blocks: Element[] = [];
+    function walk(node: Element) {
+      for (const child of Array.from(node.children)) {
+        const tag = child.tagName.toLowerCase();
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'p', 'blockquote', 'ul', 'ol', 'dl', 'pre'].includes(tag)) {
+          blocks.push(child);
+        } else if (['div', 'section', 'article', 'main', 'figure', 'aside'].includes(tag)) {
+          if (child.children.length === 0 && child.textContent?.trim()) {
+            blocks.push(child);
+          } else {
+            walk(child);
+          }
+        } else {
+          blocks.push(child);
+        }
+      }
+    }
+    walk(root);
+    return blocks;
+  }
+
+  const elements = extractBlockElements(articleDoc.body);
   for (const elem of elements) {
     const tag = elem.tagName.toLowerCase();
 
