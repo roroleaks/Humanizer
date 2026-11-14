@@ -141,6 +141,7 @@ export default function ManuscriptDetailPage({
   const [refinementResult, setRefinementResult] = useState<RefinementResult | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadData = React.useCallback(async () => {
     if (!id) return;
@@ -230,85 +231,103 @@ export default function ManuscriptDetailPage({
     setFailoverNotice(null);
     setCurrentProvider(refineProvider);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const planRes = await fetch(`/api/manuscripts/${id}/refine`, {
+      const streamRes = await fetch(`/api/manuscripts/${id}/refine/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           styleProfile: refineProfile,
           intensity: refineIntensity,
           primaryProvider: refineProvider,
+          manuscript,
+          sections,
         }),
       });
 
-      if (!planRes.ok) {
-        const errorData = await planRes.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to initialize refinement job.');
+      if (!streamRes.ok) {
+        const errorData = await streamRes.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to start refinement stream.');
       }
 
-      const { jobId, totalChunks: count } = await planRes.json();
-      setActiveJobId(jobId);
-      setTotalChunks(count);
-      setCompletedChunks(0);
+      if (!streamRes.body) {
+        throw new Error('ReadableStream not supported by browser.');
+      }
 
-      // Connect to SSE stream
-      const sse = new EventSource(`/api/manuscripts/${id}/refine/stream?jobId=${jobId}`);
-      eventSourceRef.current = sse;
+      const reader = streamRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      sse.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-          if (data.type === 'chunk_started') {
-            setCurrentChunkIndex(data.chunkIndex);
-            setCurrentProvider(data.providerName);
-            setStreamingDelta('');
-          } else if (data.type === 'provider_failover') {
-            setFailoverNotice(
-              `Provider failover: Switched from ${data.fromProvider} to ${data.toProvider} (${data.reason})`
-            );
-            setCurrentProvider(data.toProvider);
-          } else if (data.type === 'chunk_delta') {
-            setStreamingDelta((prev) => prev + data.delta);
-          } else if (data.type === 'chunk_completed') {
-            setCompletedChunks((prev) => prev + 1);
-            setCompletedChunksList((prev) => [
-              ...prev,
-              {
-                chunkId: data.chunkId,
-                refinedText: data.refinedText,
-                changeLevel: data.changeLevel,
-                flags: data.flags || [],
-                providerUsed: currentProvider,
-              },
-            ]);
-            setStreamingDelta('');
-          } else if (data.type === 'job_completed') {
-            setRefinementResult(data.result);
-            setIsRefining(false);
-            sse.close();
-            loadData();
-          } else if (data.type === 'job_failed') {
-            alert(`Refinement failed: ${data.reason}`);
-            setIsRefining(false);
-            sse.close();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+
+            if (data.type === 'job_started') {
+              setActiveJobId(data.jobId);
+              setTotalChunks(data.totalChunks);
+              setCompletedChunks(0);
+            } else if (data.type === 'chunk_started') {
+              setCurrentChunkIndex(data.chunkIndex);
+              setCurrentProvider(data.providerName);
+              setStreamingDelta('');
+            } else if (data.type === 'provider_failover') {
+              setFailoverNotice(
+                `Provider failover: Switched from ${data.fromProvider} to ${data.toProvider} (${data.reason})`
+              );
+              setCurrentProvider(data.toProvider);
+            } else if (data.type === 'chunk_delta') {
+              setStreamingDelta((prev) => prev + data.delta);
+            } else if (data.type === 'chunk_completed') {
+              setCompletedChunks((prev) => prev + 1);
+              setCompletedChunksList((prev) => [
+                ...prev,
+                {
+                  chunkId: data.chunkId,
+                  refinedText: data.refinedText,
+                  changeLevel: data.changeLevel,
+                  flags: data.flags || [],
+                  providerUsed: currentProvider,
+                },
+              ]);
+              setStreamingDelta('');
+            } else if (data.type === 'job_completed') {
+              setRefinementResult(data.result);
+              setIsRefining(false);
+              loadData();
+            } else if (data.type === 'job_failed') {
+              alert(`Refinement failed: ${data.reason}`);
+              setIsRefining(false);
+            }
+          } catch (e) {
+            console.error('Error parsing streaming event:', e);
           }
-        } catch (e) {
-          console.error('Error parsing SSE event:', e);
         }
-      };
-
-      sse.onerror = () => {
-        setIsRefining(false);
-        sse.close();
-      };
+      }
     } catch (err: any) {
-      alert(`Refinement error: ${err.message}`);
+      if (err.name !== 'AbortError') {
+        alert(`Refinement error: ${err.message}`);
+      }
       setIsRefining(false);
     }
   }
 
   function handleCancelRefinement() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
