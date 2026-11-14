@@ -48,10 +48,7 @@ export class OpenAICompatibleAdapter implements StreamingAIProviderAdapter {
   }
 
   private getModel(): string {
-    return (
-      process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL ||
-      (process.env.ZAI_API_KEY || process.env.ZHIPU_API_KEY ? 'glm-4-flash' : 'default')
-    );
+    return process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL || 'default';
   }
 
   private mapError(err: any): ProviderError {

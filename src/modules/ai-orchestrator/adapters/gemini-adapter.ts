@@ -81,7 +81,7 @@ export class GeminiAdapter implements StreamingAIProviderAdapter {
     const start = Date.now();
     try {
       const client = this.getClient();
-      const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-1.5-pro';
+      const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-3.5-flash-lite';
       const model = client.getGenerativeModel({ model: modelName });
 
       // 1-token synthetic probe
@@ -119,7 +119,7 @@ export class GeminiAdapter implements StreamingAIProviderAdapter {
 
   async refine(input: RefinementRequest): Promise<RefinementResponse> {
     const client = this.getClient();
-    const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-1.5-pro';
+    const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-3.5-flash-lite';
     const model = client.getGenerativeModel({
       model: modelName,
       systemInstruction: `You are an academic writing intelligence engine. Style: ${input.styleProfile}. ${input.instructions}`,
@@ -152,7 +152,7 @@ export class GeminiAdapter implements StreamingAIProviderAdapter {
 
   async *refineStream(input: RefinementRequest): AsyncIterable<RefinementChunk> {
     const client = this.getClient();
-    const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-1.5-pro';
+    const modelName = process.env.SH_AI_GEMINI_DEFAULT_MODEL || 'gemini-3.5-flash-lite';
     const model = client.getGenerativeModel({
       model: modelName,
       systemInstruction: `You are an academic writing intelligence engine. Style: ${input.styleProfile}. ${input.instructions}`,
