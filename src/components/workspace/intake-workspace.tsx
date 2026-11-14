@@ -101,7 +101,18 @@ function IntakeWorkspaceContent({ defaultWordDensity = 500 }: IntakeWorkspaceCon
         throw new Error('No input provided for processing.');
       }
 
-      const data: IntakeResponse = await res.json();
+      let data: IntakeResponse;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const rawText = await res.text();
+        throw new Error(
+          res.status === 500
+            ? 'Server error (500) during manuscript intake. Please check logs.'
+            : `Unexpected response from server (${res.status}): ${rawText.slice(0, 100)}`
+        );
+      }
 
       if (!res.ok || data.status === 'failed') {
         const primaryError = data.errors?.[0];

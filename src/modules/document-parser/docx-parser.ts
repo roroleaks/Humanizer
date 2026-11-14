@@ -1,5 +1,4 @@
 import mammoth from 'mammoth';
-import { JSDOM } from 'jsdom';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -17,6 +16,19 @@ export interface DocxParseOptions {
   originalFilename?: string;
   wordDensity?: number;
   maxPages?: number;
+}
+
+function stripHtml(rawHtml: string): string {
+  return rawHtml
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocument> {
@@ -40,9 +52,6 @@ export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocume
   // 2. Convert DOCX to semantic HTML using mammoth
   const conversionResult = await mammoth.convertToHtml({ buffer });
   const html = conversionResult.value;
-
-  const dom = new JSDOM(html);
-  const doc = dom.window.document;
 
   const sections: DocumentSection[] = [];
   let currentTitle = 'Title & Preliminary';
@@ -80,16 +89,18 @@ export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocume
     }
   }
 
-  // Iterate top-level elements in body
-  const bodyNodes = Array.from(doc.body.children);
+  // Parse HTML elements without heavy jsdom dependency
   let detectedTitle = originalFilename?.replace(/\.docx$/i, '') || 'Untitled Manuscript';
+  const blockRegex = /<(h[1-6]|table|p|blockquote|ul|ol|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match: RegExpExecArray | null;
 
-  for (const node of bodyNodes) {
-    const tagName = node.tagName.toLowerCase();
+  while ((match = blockRegex.exec(html)) !== null) {
+    const tagName = match[1].toLowerCase();
+    const innerHtml = match[2];
 
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
       flushSection();
-      const headingText = node.textContent?.trim() || 'Untitled Section';
+      const headingText = stripHtml(innerHtml) || 'Untitled Section';
       currentTitle = headingText;
       currentType = classifySectionHeading(headingText);
 
@@ -101,29 +112,34 @@ export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocume
       currentTitle = `Table ${sections.filter((s) => s.type === 'table').length + 1}`;
       currentType = 'table';
 
-      // Parse structured TableData
-      const tableElem = node as HTMLTableElement;
-      const rowElements = Array.from(tableElem.querySelectorAll('tr'));
+      // Parse structured table rows and cells
       const tableCells: TableCell[][] = [];
+      const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+      let trMatch: RegExpExecArray | null;
 
-      for (const rowElem of rowElements) {
+      while ((trMatch = trRegex.exec(innerHtml)) !== null) {
         const rowCells: TableCell[] = [];
-        const cellNodes = Array.from(rowElem.querySelectorAll('th, td'));
-        for (const cellNode of cellNodes) {
-          const colSpan = parseInt(cellNode.getAttribute('colspan') || '1', 10);
-          const rowSpan = parseInt(cellNode.getAttribute('rowspan') || '1', 10);
-          const isHeader = cellNode.tagName.toLowerCase() === 'th';
-          const headerScope = isHeader
-            ? (cellNode.getAttribute('scope') as 'row' | 'column' | null) || 'column'
-            : null;
+        const cellRegex = /<(th|td)([^>]*)>([\s\S]*?)<\/\1>/gi;
+        let cellMatch: RegExpExecArray | null;
+
+        while ((cellMatch = cellRegex.exec(trMatch[1])) !== null) {
+          const isHeader = cellMatch[1].toLowerCase() === 'th';
+          const attrs = cellMatch[2];
+          const cellContent = stripHtml(cellMatch[3]);
+
+          const colSpanMatch = /colspan=["']?(\d+)["']?/i.exec(attrs);
+          const rowSpanMatch = /rowspan=["']?(\d+)["']?/i.exec(attrs);
+          const colSpan = colSpanMatch ? parseInt(colSpanMatch[1], 10) : 1;
+          const rowSpan = rowSpanMatch ? parseInt(rowSpanMatch[1], 10) : 1;
 
           rowCells.push({
-            text: cellNode.textContent?.trim() || '',
+            text: cellContent,
             colSpan,
             rowSpan,
-            headerScope,
+            headerScope: isHeader ? 'column' : null,
           });
         }
+
         if (rowCells.length > 0) {
           tableCells.push(rowCells);
         }
@@ -135,12 +151,12 @@ export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocume
         cells: tableCells,
       };
 
-      currentContentParts.push(node.textContent?.trim() || '');
+      currentContentParts.push(stripHtml(innerHtml));
       flushSection();
       currentTitle = 'Continuing Text';
       currentType = 'unknown';
     } else {
-      const text = node.textContent?.trim();
+      const text = stripHtml(innerHtml);
       if (text) {
         currentContentParts.push(text);
       }
@@ -148,6 +164,28 @@ export async function parseDocx(options: DocxParseOptions): Promise<ParsedDocume
   }
 
   flushSection();
+
+  // If regex found no blocks, extract full text as fallback
+  if (sections.length === 0) {
+    const rawExtraction = await mammoth.extractRawText({ buffer });
+    const text = rawExtraction.value.trim();
+    if (text) {
+      sections.push({
+        id: crypto.randomUUID(),
+        type: 'unknown',
+        title: detectedTitle,
+        order: 0,
+        content: text,
+        children: [],
+        location: {
+          sectionId: '',
+          paragraphIndex: 0,
+          charStart: 0,
+          charEnd: text.length,
+        },
+      });
+    }
+  }
 
   // If no sections were produced, create a fallback section from raw text
   const rawText = sections.map((s) => `${s.title}\n${s.content}`).join('\n\n');
