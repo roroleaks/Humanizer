@@ -57,18 +57,19 @@ export class HeuristicNaturalAdapter implements StreamingAIProviderAdapter {
 
   async health(): Promise<ProviderHealth> {
     return {
+      name: this.name,
       status: 'healthy',
       latencyMs: 15,
-      checkedAt: new Date(),
+      lastCheckedAt: new Date().toISOString(),
     };
   }
 
   async refine(input: RefinementRequest): Promise<RefinementResponse> {
     const refined = transformProseHeuristic(input.textToRefine);
     return {
-      refinedText: refined,
-      providerUsed: this.name,
+      providerName: this.name,
       modelUsed: 'heuristic-natural-engine',
+      refinedText: refined,
       tokensUsed: Math.ceil(refined.length / 4),
       finishReason: 'stop',
       warnings: [],
