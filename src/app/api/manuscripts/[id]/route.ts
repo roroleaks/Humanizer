@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { manuscriptRepository, processingEventRepository } from '@/lib/storage/repositories';
+import { refinementRepository } from '@/modules/refinement-engine/repositories/refinement-repository';
+import { refinementEngine } from '@/modules/refinement-engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +62,23 @@ export async function GET(
         detail: e.detail,
         createdAt: e.createdAt.toISOString(),
       })),
+      refinementResult: await (async () => {
+        try {
+          const latestJob = await refinementRepository.getLatestJobForManuscript(id);
+          if (latestJob && (latestJob.status === 'completed' || latestJob.completedChunks > 0)) {
+            return await refinementEngine.getJobResults(latestJob.id);
+          }
+        } catch {}
+        return null;
+      })(),
+      latestJobId: await (async () => {
+        try {
+          const latestJob = await refinementRepository.getLatestJobForManuscript(id);
+          return latestJob?.id || null;
+        } catch {
+          return null;
+        }
+      })(),
     });
   } catch (error: any) {
     return NextResponse.json(

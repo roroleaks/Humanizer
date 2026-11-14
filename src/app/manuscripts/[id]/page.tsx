@@ -163,6 +163,12 @@ export default function ManuscriptDetailPage({
       if (data.manuscript?.primaryProvider) {
         setRefineProvider(data.manuscript.primaryProvider);
       }
+      if (data.refinementResult) {
+        setRefinementResult(data.refinementResult);
+      }
+      if (data.latestJobId) {
+        setActiveJobId(data.latestJobId);
+      }
     } catch (err: any) {
       setLoadError(err?.message || 'Failed to load manuscript details.');
     } finally {
