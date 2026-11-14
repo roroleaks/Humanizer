@@ -118,17 +118,21 @@ The app will be reachable at `http://localhost:3000`.
 ---
 
 ## Testing
+
+The verification suite consists of TypeScript scripts (`tests/verify-phase*.ts` and `tests/test-refinement-e2e.ts`) executed directly via `tsx`.
+
 ```bash
-# Lint & type‑check
- pnpm lint && pnpm type-check
+# Run the full verification suite serially
+npm test        # (pnpm test also works equivalently)
 
-# Unit tests (Jest/TS)
- pnpm test
+# Lint & type-check
+npm run lint && npm run type-check
 
-# End‑to‑end test (uses a synthetic streaming adapter if no provider keys are set)
- npx tsx tests/test-refinement-e2e.ts
+# Run the end-to-end refinement test individually
+npx tsx tests/test-refinement-e2e.ts
 ```
-All tests should pass without external credentials.
+
+All tests pass without external AI-provider credentials (integration probes self-skip gracefully when keys are absent).
 
 ---
 

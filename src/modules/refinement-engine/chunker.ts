@@ -297,7 +297,7 @@ export class SemanticChunker implements Chunker {
           protectedInventory: {
             manuscriptId: '',
             items: [],
-            createdAt: new Date().toISOString(),
+            createdAt: '1970-01-01T00:00:00.000Z',
           },
         },
         sharedReferenceMarkers: chunk.sharedMarkers,
