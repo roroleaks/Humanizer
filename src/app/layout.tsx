@@ -6,8 +6,28 @@ import { AppLayoutShell } from '@/components/layout';
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Scientific Humanizer | Academic Writing Intelligence Platform',
-  description: 'Scientific Clarity. Natural Expression. Research Integrity. Specialized academic manuscript refinement platform.',
+  title: 'Humanizero — Scientific Clarity, Natural Expression & Research Integrity',
+  description: 'Specialized academic manuscript refinement platform with deterministic integrity protection, Vancouver ICMJE preservation, and multi-provider AI orchestration.',
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: 'any' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: ['/icon.png'],
+  },
+  openGraph: {
+    title: 'Humanizero — Academic Writing Intelligence Platform',
+    description: 'Scientific Clarity. Natural Expression. Research Integrity.',
+    url: 'https://humanizero.vercel.app',
+    siteName: 'Humanizero',
+    images: [{ url: '/humanizero-banner.jpg', width: 1200, height: 630, alt: 'Humanizero' }],
+    locale: 'en_US',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

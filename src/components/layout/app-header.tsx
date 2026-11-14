@@ -46,18 +46,32 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
 
         <Link
           href="/"
-          className="flex flex-col group focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent rounded p-0.5"
-          aria-label="Scientific Humanizer Home"
+          className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent rounded p-0.5"
+          aria-label="Humanizero Home"
         >
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-accent inline-block animate-pulse" aria-hidden="true" />
-            <span className="text-base md:text-lg font-bold tracking-tight text-white group-hover:text-teal-light transition-colors">
-              Scientific Humanizer
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/20 shadow-sm shrink-0 bg-slate-900 group-hover:scale-105 transition-transform">
+            <Image
+              src="/icon.png"
+              alt="Humanizero Icon"
+              fill
+              sizes="32px"
+              className="object-cover"
+              priority
+            />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-base md:text-lg font-bold tracking-tight text-white group-hover:text-teal-light transition-colors">
+                Humanizero
+              </span>
+              <span className="hidden md:inline-block bg-teal-500/20 border border-teal-400/40 text-teal-300 rounded-full px-2 py-0.5 text-[10px] font-bold">
+                v1.0
+              </span>
+            </div>
+            <span className="hidden sm:inline-block text-[10px] text-slate-400 font-medium tracking-wide">
+              Scientific Clarity. Natural Expression. Research Integrity.
             </span>
           </div>
-          <span className="hidden sm:inline-block text-[10px] text-slate-400 font-medium tracking-wide">
-            Scientific Clarity. Natural Expression. Research Integrity.
-          </span>
         </Link>
       </div>
 

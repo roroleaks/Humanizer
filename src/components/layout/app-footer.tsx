@@ -13,9 +13,17 @@ export function AppFooter() {
         {/* Top: Brand info and author profile card */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="space-y-1">
-            <div className="flex items-center justify-center sm:justify-start gap-2">
-              <span className="w-2 h-2 rounded-full bg-teal-accent inline-block" />
-              <span className="font-bold text-sm text-brand-navyPrimary">Scientific Humanizer</span>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <div className="relative w-6 h-6 rounded-md overflow-hidden border border-slate-300 shadow-2xs shrink-0">
+                <Image
+                  src="/icon.png"
+                  alt="Humanizero Icon"
+                  fill
+                  sizes="24px"
+                  className="object-cover"
+                />
+              </div>
+              <span className="font-bold text-sm text-brand-navyPrimary">Humanizero</span>
               <span className="bg-teal-50 border border-teal-200 text-teal-800 rounded-full px-2 py-0.5 text-[10px] font-semibold">
                 v1.0 Academic Intelligence
               </span>
