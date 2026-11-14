@@ -3,8 +3,6 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
-import { JSDOM } from 'jsdom';
-import { Readability } from '@mozilla/readability';
 import {
   DocumentSection,
   ParsedDocument,
@@ -156,6 +154,8 @@ export async function parseUrl(options: UrlFetchOptions): Promise<ParsedDocument
   fs.writeFileSync(binaryFilePath, html, 'utf-8');
 
   // 3. Extract readable article body using Mozilla Readability
+  const { JSDOM } = await import('jsdom');
+  const { Readability } = await import('@mozilla/readability');
   const dom = new JSDOM(html, { url: finalUrl });
   const reader = new Readability(dom.window.document);
   const article = reader.parse();

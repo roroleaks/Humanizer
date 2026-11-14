@@ -4,6 +4,10 @@
  * Repository methods, and Refinement Engine flow.
  */
 
+import './setup-env';
+import os from 'os';
+import path from 'path';
+
 import { SemanticChunker, countWords, extractReferenceMarkers } from '../src/modules/refinement-engine/chunker';
 import { summarizeAdjacentText, extractSentences } from '../src/modules/refinement-engine/adjacent-summarizer';
 import { RegexNumberGuard, extractNumbers } from '../src/modules/refinement-engine/number-guard';
@@ -218,6 +222,7 @@ async function runTests() {
   if (failed > 0) {
     process.exit(1);
   }
+  process.exit(0);
 }
 
 runTests().catch((e) => {

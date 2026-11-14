@@ -1,5 +1,8 @@
-import fs from 'fs';
+import './setup-env';
+import os from 'os';
 import path from 'path';
+
+import fs from 'fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'url';
 import {
@@ -246,6 +249,7 @@ REFERENCES
   if (failCount > 0) {
     process.exit(1);
   }
+  process.exit(0);
 }
 
 runVerification().catch((e) => {

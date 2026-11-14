@@ -1,3 +1,7 @@
+import './setup-env';
+import os from 'os';
+import path from 'path';
+
 import {
   AIProviderName,
   StreamingAIProviderAdapter,
@@ -395,6 +399,7 @@ async function runPhase3Verification() {
   if (failCount > 0) {
     process.exit(1);
   }
+  process.exit(0);
 }
 
 runPhase3Verification().catch((err) => {

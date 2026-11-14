@@ -4,6 +4,10 @@
  * streaming events, and immutability of original manuscripts.
  */
 
+import './setup-env';
+import os from 'os';
+import path from 'path';
+
 import { manuscriptRepository } from '../src/lib/storage/repositories/manuscript-repository';
 import { refinementRepository } from '../src/modules/refinement-engine/repositories/refinement-repository';
 import { refinementEngine } from '../src/modules/refinement-engine';
@@ -175,6 +179,7 @@ async function runE2ETest() {
   console.log(`[PASS] Refinement results retrieved successfully: ${(results.paragraphs || results.refinedParagraphs || []).length} paragraphs refined`);
 
   console.log('\n--- All End-to-End Tests Succeeded ---');
+  process.exit(0);
 }
 
 runE2ETest().catch((err) => {

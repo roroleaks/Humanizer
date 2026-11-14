@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    serverComponentsExternalPackages: ['better-sqlite3', 'jsdom', '@mozilla/readability'],
+  },
   env: {
     NEXT_PUBLIC_SH_APP_NAME: process.env.SH_APP_NAME || 'Scientific Humanizer',
     NEXT_PUBLIC_SH_APP_ENV: process.env.SH_APP_ENV || 'development',

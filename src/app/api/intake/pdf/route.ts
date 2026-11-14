@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
-import { parsePdf } from '@/modules/document-parser';
+import { parsePdf } from '@/modules/document-parser/pdf-parser';
 import { manuscriptRepository, processingEventRepository } from '@/lib/storage/repositories';
 import { IntakeResponse } from '@/contracts/manuscript';
 import { rateLimiter } from '@/lib/rate-limiter';
