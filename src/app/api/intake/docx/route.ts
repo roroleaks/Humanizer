@@ -4,6 +4,7 @@ import { parseDocx } from '@/modules/document-parser';
 import { manuscriptRepository, processingEventRepository } from '@/lib/storage/repositories';
 import { IntakeResponse } from '@/contracts/manuscript';
 import { rateLimiter } from '@/lib/rate-limiter';
+import { getStorageRoot } from '@/lib/storage-path';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const words = parsed.rawText.split(/\s+/).filter(Boolean);
     const wordCount = words.length;
-    const storagePath = process.env.SH_STORAGE_LOCAL_PATH || './.storage';
+    const storagePath = getStorageRoot();
     const originalFilePath = path.resolve(storagePath, 'originals', `${manuscriptId}.docx`);
 
     // Persist manuscript record

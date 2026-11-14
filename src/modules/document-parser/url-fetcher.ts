@@ -13,6 +13,7 @@ import {
 } from '@/contracts/document-section';
 import { classifySectionHeading } from './section-classifier';
 import { detectAndLogPromptInjection } from './security-guard';
+import { getStorageRoot } from '@/lib/storage-path';
 
 export interface UrlFetchOptions {
   manuscriptId: string;
@@ -146,7 +147,7 @@ export async function parseUrl(options: UrlFetchOptions): Promise<ParsedDocument
   const { html, finalUrl } = await fetchSafeUrl(url);
 
   // 2. Save raw HTML to local private storage
-  const storagePath = process.env.SH_STORAGE_LOCAL_PATH || './.storage';
+  const storagePath = getStorageRoot();
   const originalsDir = path.resolve(storagePath, 'originals');
   if (!fs.existsSync(originalsDir)) {
     fs.mkdirSync(originalsDir, { recursive: true });

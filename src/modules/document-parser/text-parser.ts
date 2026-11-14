@@ -6,6 +6,7 @@ import {
 } from '@/contracts/document-section';
 import { classifySectionHeading } from './section-classifier';
 import { detectAndLogPromptInjection } from './security-guard';
+import { getStorageRoot } from '@/lib/storage-path';
 
 export interface TextParseOptions {
   manuscriptId: string;
@@ -32,7 +33,7 @@ export async function parseText(options: TextParseOptions): Promise<ParsedDocume
   const normalizedText = text.replace(/\r\n/g, '\n').trim();
 
   // 1. Save original text to local private storage
-  const storagePath = process.env.SH_STORAGE_LOCAL_PATH || './.storage';
+  const storagePath = getStorageRoot();
   const originalsDir = path.resolve(storagePath, 'originals');
   if (!fs.existsSync(originalsDir)) {
     fs.mkdirSync(originalsDir, { recursive: true });

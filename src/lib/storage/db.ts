@@ -3,13 +3,14 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import * as schema from './schema';
+import { getStorageRoot } from '@/lib/storage-path';
 
 // Section 3.2 & 5.2: Startup check to strictly enforce privacy
 if (process.env.NODE_ENV === 'production' && process.env.SH_LOG_MANUSCRIPT_CONTENT === 'true') {
   throw new Error('CRITICAL SECURITY VIOLATION: SH_LOG_MANUSCRIPT_CONTENT must be "false" in production.');
 }
 
-const storagePath = process.env.SH_STORAGE_LOCAL_PATH || './.storage';
+const storagePath = getStorageRoot();
 const dbFilePath = process.env.SH_DATABASE_SQLITE_PATH || path.join(storagePath, 'dev.db');
 
 // Ensure storage and originals directories exist

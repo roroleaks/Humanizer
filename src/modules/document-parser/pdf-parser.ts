@@ -8,6 +8,7 @@ import {
 } from '@/contracts/document-section';
 import { classifySectionHeading } from './section-classifier';
 import { detectAndLogPromptInjection } from './security-guard';
+import { getStorageRoot } from '@/lib/storage-path';
 
 export interface PdfParseOptions {
   manuscriptId: string;
@@ -25,7 +26,7 @@ export async function parsePdf(options: PdfParseOptions): Promise<ParsedDocument
   } = options;
 
   // 1. Save original PDF binary to local private storage
-  const storagePath = process.env.SH_STORAGE_LOCAL_PATH || './.storage';
+  const storagePath = getStorageRoot();
   const originalsDir = path.resolve(storagePath, 'originals');
   if (!fs.existsSync(originalsDir)) {
     fs.mkdirSync(originalsDir, { recursive: true });
