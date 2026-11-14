@@ -816,8 +816,16 @@ export default function ManuscriptDetailPage({
                                 </span>
                               </div>
                               <div className="font-serif text-slate-900 text-sm leading-relaxed whitespace-pre-wrap">
-                                {(refinementResult.refinedParagraphs || refinementResult.paragraphs || []).find((p) => p.id.includes(selectedSection.id))?.refinedText ||
-                                  selectedSection.content}
+                                {(() => {
+                                  const list = refinementResult.refinedParagraphs || refinementResult.paragraphs || [];
+                                  const matching = list.filter(
+                                    (p) => p.sectionId === selectedSection.id || p.id.includes(selectedSection.id)
+                                  );
+                                  if (matching.length > 0) {
+                                    return matching.map((p) => p.refinedText).join('\n\n');
+                                  }
+                                  return selectedSection.content;
+                                })()}
                               </div>
                             </div>
 

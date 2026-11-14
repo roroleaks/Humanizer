@@ -77,6 +77,7 @@ export interface RefinementFlag {
  */
 export interface RefinedParagraph {
   id: string;
+  sectionId?: string;
   originalText: string;
   refinedText: string;
   changeLevel: 'unchanged' | 'minor' | 'major';

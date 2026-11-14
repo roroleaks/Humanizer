@@ -160,12 +160,27 @@ export async function generateManuscriptDocx(
     ],
   });
 
-  // Collect refined paragraph mapping if available
-  const refinedMap = new Map<string, string>();
+  // Collect refined text grouped by section identifier
+  const sectionRefinedChunks = new Map<string, Array<{ chunkIndex: number; text: string }>>();
   if (refinementResult) {
     const list = refinementResult.refinedParagraphs || refinementResult.paragraphs || [];
     for (const p of list) {
-      refinedMap.set(p.id, p.refinedText);
+      let targetSectionId = p.sectionId;
+      if (!targetSectionId) {
+        // Fallback: chunk IDs are formatted as `${jobId}_chunk_${section.id}_${chunkIndex}`
+        const match = p.id.match(/chunk_(.+)_(\d+)$/);
+        if (match) {
+          targetSectionId = match[1];
+        }
+      }
+
+      if (targetSectionId) {
+        const existing = sectionRefinedChunks.get(targetSectionId) || [];
+        const indexMatch = p.id.match(/_(\d+)$/);
+        const idx = indexMatch ? parseInt(indexMatch[1], 10) : existing.length;
+        existing.push({ chunkIndex: idx, text: p.refinedText });
+        sectionRefinedChunks.set(targetSectionId, existing);
+      }
     }
   }
 
@@ -213,7 +228,13 @@ export async function generateManuscriptDocx(
       }
     } else {
       // Body Text: check for refined prose or original content
-      const contentText = refinedMap.get(section.id) || section.content;
+      let contentText = section.content;
+      const chunksForSection = sectionRefinedChunks.get(section.id);
+      if (chunksForSection && chunksForSection.length > 0) {
+        chunksForSection.sort((a, b) => a.chunkIndex - b.chunkIndex);
+        contentText = chunksForSection.map((c) => c.text).join('\n\n');
+      }
+
       const paragraphsInContent = contentText.split(/\n\n+/);
 
       for (const pText of paragraphsInContent) {

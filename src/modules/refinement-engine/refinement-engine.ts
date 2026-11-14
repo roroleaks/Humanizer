@@ -333,6 +333,8 @@ export class DefaultRefinementEngine implements RefinementEngine {
         yield {
           type: 'chunk_completed',
           chunkId: chunk.id,
+          chunkIndex: chunk.chunkIndex,
+          sectionId: chunk.sectionId,
           refinedText: chunkRefinedText,
           changeLevel,
           flags,
@@ -434,10 +436,13 @@ export class DefaultRefinementEngine implements RefinementEngine {
 
       paragraphs.push({
         id: chunk.id,
+        sectionId: chunk.sectionId,
         originalText: chunk.originalText,
         refinedText: chunk.refinedText || chunk.originalText,
         changeLevel: (chunk.changeLevel as any) || 'unchanged',
         flags,
+        providerUsed: chunk.providerUsed || undefined,
+        modelUsed: chunk.modelUsed || undefined,
       });
     }
 

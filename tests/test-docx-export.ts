@@ -47,8 +47,8 @@ async function runDocxExportTest() {
       orderIndex: 1,
       type: 'introduction',
       title: 'Introduction',
-      content: 'Heart failure with preserved ejection fraction constitutes approximately half of all heart failure hospitalizations worldwide. Despite substantial therapeutic progress in heart failure with reduced ejection fraction, effective pharmacological strategies that improve hard clinical outcomes in preserved ejection fraction have remained remarkably elusive. SGLT2 inhibitors demonstrate profound cardiorenal metabolic improvements across diverse clinical populations.',
-      charCount: 430,
+      content: 'It is important to note that heart failure with preserved ejection fraction constitutes approximately half of all heart failure hospitalizations worldwide. Furthermore, despite substantial therapeutic progress in heart failure with reduced ejection fraction, effective pharmacological strategies that improve hard clinical outcomes in preserved ejection fraction have remained remarkably elusive. SGLT2 inhibitors demonstrate profound cardiorenal metabolic improvements across diverse clinical populations.',
+      charCount: 480,
       createdAt: new Date(),
     },
     {
@@ -188,6 +188,24 @@ async function runDocxExportTest() {
     throw new Error('Generated DOCX buffer does not start with PK ZIP header magic bytes!');
   }
   console.log('[PASS] Valid PK Zip / OOXML magic header confirmed.');
+
+  // Regression check (Section 7 Defect): verify refined prose is actually exported into DOCX body
+  const mammoth = await import('mammoth');
+  const { value: docxText } = await mammoth.extractRawText({ buffer: docxBuffer });
+
+  const introRefined = results.refinedParagraphs?.find((p) => p.sectionId === `sec_${manuscriptId}_intro`)?.refinedText;
+  if (introRefined) {
+    const refinedSnippet = introRefined.split('.')[0].trim();
+    if (!docxText.includes(refinedSnippet)) {
+      throw new Error(`Refined-text defect detected: expected refined snippet "${refinedSnippet}" not found in DOCX!`);
+    }
+    console.log('[PASS] Refined prose confirmed present in exported DOCX document body.');
+  }
+
+  if (docxText.includes('It is important to note that')) {
+    throw new Error('Refined-text defect detected: original robotic filler "It is important to note that" leaked into DOCX body!');
+  }
+  console.log('[PASS] Regression verified: Original robotic fillers cleanly removed from exported DOCX body.');
 
   // Save to output folder
   const outputDir = path.resolve(process.cwd(), 'output');
