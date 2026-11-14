@@ -47,6 +47,13 @@ export class OpenAICompatibleAdapter implements StreamingAIProviderAdapter {
     });
   }
 
+  private getModel(): string {
+    return (
+      process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL ||
+      (process.env.ZAI_API_KEY || process.env.ZHIPU_API_KEY ? 'glm-4-flash' : 'default')
+    );
+  }
+
   private mapError(err: any): ProviderError {
     const status = err?.status || err?.statusCode;
     const message = err?.message || 'OpenAI-compatible endpoint request failed';
@@ -97,7 +104,7 @@ export class OpenAICompatibleAdapter implements StreamingAIProviderAdapter {
         await client.models.list();
       } catch {
         // Fall back to 1-token test if models.list is not implemented
-        const model = process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL || 'default';
+        const model = this.getModel();
         await client.chat.completions.create({
           model,
           max_tokens: 1,
@@ -134,7 +141,7 @@ export class OpenAICompatibleAdapter implements StreamingAIProviderAdapter {
 
   async refine(input: RefinementRequest): Promise<RefinementResponse> {
     const client = this.getClient();
-    const model = process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL || 'default';
+    const model = this.getModel();
 
     try {
       const response = await client.chat.completions.create({
@@ -171,7 +178,7 @@ export class OpenAICompatibleAdapter implements StreamingAIProviderAdapter {
 
   async *refineStream(input: RefinementRequest): AsyncIterable<RefinementChunk> {
     const client = this.getClient();
-    const model = process.env.SH_AI_OPENAI_COMPATIBLE_DEFAULT_MODEL || 'default';
+    const model = this.getModel();
 
     try {
       const stream = await client.chat.completions.create({

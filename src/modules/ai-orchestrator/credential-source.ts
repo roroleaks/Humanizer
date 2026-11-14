@@ -23,7 +23,12 @@ export class EnvVarCredentialSource implements CredentialSource {
       case 'anthropic':
         return process.env.SH_AI_ANTHROPIC_API_KEY?.trim() || null;
       case 'openai_compatible':
-        return process.env.SH_AI_OPENAI_COMPATIBLE_API_KEY?.trim() || null;
+        return (
+          process.env.SH_AI_OPENAI_COMPATIBLE_API_KEY?.trim() ||
+          process.env.ZAI_API_KEY?.trim() ||
+          process.env.ZHIPU_API_KEY?.trim() ||
+          null
+        );
       default:
         return null;
     }
@@ -31,7 +36,10 @@ export class EnvVarCredentialSource implements CredentialSource {
 
   getBaseUrl(providerName: AIProviderName): string | null {
     if (providerName === 'openai_compatible') {
-      return process.env.SH_AI_OPENAI_COMPATIBLE_BASE_URL?.trim() || null;
+      return (
+        process.env.SH_AI_OPENAI_COMPATIBLE_BASE_URL?.trim() ||
+        (process.env.ZAI_API_KEY || process.env.ZHIPU_API_KEY ? 'https://open.bigmodel.cn/api/paas/v4' : null)
+      );
     }
     return null;
   }

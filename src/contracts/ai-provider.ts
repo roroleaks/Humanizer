@@ -55,6 +55,7 @@ export interface RefinementRequest {
   protectedInventory: ProtectedInventory;
   styleProfile: ManuscriptStyleProfile;
   instructions: string;
+  preferredProvider?: AIProviderName;
 }
 
 /**

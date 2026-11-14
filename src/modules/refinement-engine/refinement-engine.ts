@@ -231,6 +231,7 @@ export class DefaultRefinementEngine implements RefinementEngine {
         protectedInventory: chunkPlan.context.protectedInventory,
         styleProfile: job.styleProfile as ManuscriptStyleProfile,
         instructions: promptInstructions,
+        preferredProvider: currentProvider || (job.primaryProvider as AIProviderName) || 'gemini',
       };
 
       let chunkRefinedText = '';

@@ -42,7 +42,7 @@ const AI_PROVIDERS: { value: AIProviderName; label: string; defaultModel: string
   { value: 'gemini', label: 'Google Gemini (1.5 Pro)', defaultModel: 'gemini-1.5-pro' },
   { value: 'openai', label: 'OpenAI Enterprise (GPT-4o)', defaultModel: 'gpt-4o' },
   { value: 'anthropic', label: 'Anthropic Claude (3.5 Sonnet)', defaultModel: 'claude-3-5-sonnet-latest' },
-  { value: 'openai_compatible', label: 'Custom OpenAI-Compatible Endpoint', defaultModel: 'configurable' },
+  { value: 'openai_compatible', label: 'Z.ai / GLM-5 (OpenAI-Compatible)', defaultModel: 'glm-4-flash' },
 ];
 
 export function ProcessingConfig({

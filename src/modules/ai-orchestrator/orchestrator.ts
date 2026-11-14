@@ -71,13 +71,13 @@ export class DefaultAIOrchestrator implements AIOrchestrator {
 
     this.primaryProvider =
       options?.primaryProvider ??
-      ((process.env.SH_AI_PRIMARY_PROVIDER as AIProviderName) || 'openai');
+      ((process.env.SH_AI_PRIMARY_PROVIDER as AIProviderName) || 'gemini');
 
     this.fallbackProviders =
       options?.fallbackProviders ??
       (process.env.SH_AI_FALLBACK_PROVIDERS
         ? (process.env.SH_AI_FALLBACK_PROVIDERS.split(',').map((s) => s.trim()) as AIProviderName[])
-        : ['gemini', 'anthropic']);
+        : ['openai', 'anthropic', 'openai_compatible']);
 
     this.circuitBreaker = options?.circuitBreaker ?? defaultCircuitBreaker;
     this.retryPolicy = options?.retryPolicy ?? new ExponentialBackoffWithJitterPolicy();
@@ -119,7 +119,8 @@ export class DefaultAIOrchestrator implements AIOrchestrator {
 
   async refine(request: RefinementRequest): Promise<RefinementResponse> {
     const attemptedProviders: Array<{ name: AIProviderName; error: string }> = [];
-    const chain = [this.primaryProvider, ...this.fallbackProviders.filter((p) => p !== this.primaryProvider)];
+    const effectivePrimary = request.preferredProvider || this.primaryProvider;
+    const chain = [effectivePrimary, ...this.fallbackProviders.filter((p) => p !== effectivePrimary)];
 
     for (const providerName of chain) {
       const adapter = this.adapters.get(providerName);
@@ -174,7 +175,8 @@ export class DefaultAIOrchestrator implements AIOrchestrator {
 
   async *refineStream(request: RefinementRequest): AsyncIterable<RefinementChunk> {
     const attemptedProviders: Array<{ name: AIProviderName; error: string }> = [];
-    const chain = [this.primaryProvider, ...this.fallbackProviders.filter((p) => p !== this.primaryProvider)];
+    const effectivePrimary = request.preferredProvider || this.primaryProvider;
+    const chain = [effectivePrimary, ...this.fallbackProviders.filter((p) => p !== effectivePrimary)];
 
     for (const providerName of chain) {
       const adapter = this.adapters.get(providerName);
