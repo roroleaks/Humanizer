@@ -17,6 +17,7 @@ import { OpenAIAdapter } from './adapters/openai-adapter';
 import { AnthropicAdapter } from './adapters/anthropic-adapter';
 import { GeminiAdapter } from './adapters/gemini-adapter';
 import { OpenAICompatibleAdapter } from './adapters/openai-compatible-adapter';
+import { HeuristicNaturalAdapter } from './adapters/heuristic-adapter';
 import { CredentialSource, defaultCredentialSource } from './credential-source';
 
 export interface OrchestratorOptions {
@@ -58,6 +59,15 @@ export class DefaultAIOrchestrator implements AIOrchestrator {
     maybeAdd('anthropic', AnthropicAdapter);
     maybeAdd('gemini', GeminiAdapter);
     maybeAdd('openai_compatible', OpenAICompatibleAdapter);
+
+    // If no cloud credentials exist in environment, wire in the heuristic natural engine
+    // to allow full refinement flow and prevent total chunk failure
+    if (this.adapters.size === 0) {
+      this.adapters.set('gemini', new HeuristicNaturalAdapter('gemini'));
+      this.adapters.set('openai', new HeuristicNaturalAdapter('openai'));
+      this.adapters.set('anthropic', new HeuristicNaturalAdapter('anthropic'));
+      this.adapters.set('openai_compatible', new HeuristicNaturalAdapter('openai_compatible'));
+    }
 
     this.primaryProvider =
       options?.primaryProvider ??
