@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Plus, Settings, Menu, Shield } from 'lucide-react';
+import { Plus, Settings, Menu } from 'lucide-react';
 
 interface AppHeaderProps {
   onToggleSidebar?: () => void;
@@ -24,7 +25,7 @@ const ROUTE_TITLES: Record<string, string> = {
 
 /**
  * Top application header providing branding, responsive navigation toggle,
- * breadcrumbs, and primary CTA actions.
+ * breadcrumbs, primary CTA actions, and author profile signature.
  */
 export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   const pathname = usePathname();
@@ -69,14 +70,14 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
         <span className="text-teal-light font-medium">{currentTitle}</span>
       </nav>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-2.5">
+      {/* Right: Actions & Author Signature */}
+      <div className="flex items-center gap-3">
         <Link
           href="/new"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-accent text-white hover:bg-teal-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-accent transition-all shadow-sm"
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>New Manuscript</span>
+          <span className="hidden sm:inline">New Manuscript</span>
         </Link>
 
         <Link
@@ -88,23 +89,28 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           <Settings className="w-4 h-4" aria-hidden="true" />
         </Link>
 
-        {/* User avatar placeholder (Sign-in coming in Phase 9) */}
-        <div className="relative group">
-          <button
-            type="button"
-            disabled
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-navyLight text-slate-400 border border-slate-700 cursor-not-allowed opacity-80"
-            aria-label="User Account (Sign-in coming in Phase 9)"
-          >
-            <Shield className="w-4 h-4" aria-hidden="true" />
-          </button>
-          <div
-            role="tooltip"
-            className="absolute right-0 top-full mt-2 hidden group-hover:block z-50 w-44 p-2 text-[11px] bg-slate-900 text-slate-200 rounded shadow-lg border border-slate-800"
-          >
-            User authentication & workspace profiles coming in Phase 9.
+        {/* Dr. Raouf Roshdy Signature Avatar Block */}
+        <a
+          href="https://github.com/roroleaks"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 px-2.5 py-1 rounded-full shadow-inner transition-all group"
+          title="Designed & Developed by Dr. Raouf Roshdy"
+        >
+          <div className="relative w-7 h-7 rounded-full overflow-hidden border-2 border-teal-400/80 shrink-0 bg-teal-950">
+            <Image
+              src="/dr-raouf.jpg"
+              alt="Dr Raouf Roshdy"
+              fill
+              sizes="28px"
+              className="object-cover"
+              priority
+            />
           </div>
-        </div>
+          <span className="text-xs font-medium text-slate-200 group-hover:text-white tracking-wide pr-1 hidden sm:inline">
+            Dr Raouf Roshdy
+          </span>
+        </a>
       </div>
     </header>
   );
