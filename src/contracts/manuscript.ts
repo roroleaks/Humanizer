@@ -66,6 +66,44 @@ export interface ManuscriptSummary {
   updatedAt: string; // ISO 8601
 }
 
+export interface ManuscriptWithRelations {
+  id: string;
+  title: string;
+  status: string;
+  sourceType: string;
+  sourceUrl?: string;
+  originalFilename?: string;
+  pageCount: number;
+  pageCountConfidence: string;
+  wordCount: number;
+  ocrUsed: boolean;
+  styleProfile: string;
+  primaryProvider?: string;
+  refinementConsentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  sections: Array<{
+    id: string;
+    manuscriptId: string;
+    parentId?: string;
+    type: string;
+    title: string;
+    orderIndex: number;
+    content: string;
+    tableData?: any;
+    rawHtml?: string;
+    charCount: number;
+    createdAt: string;
+  }>;
+  metadata?: Array<{
+    id: string;
+    manuscriptId: string;
+    key: string;
+    value: string;
+    createdAt: string;
+  }>;
+}
+
 /**
  * Standard intake error descriptor returned when document processing halts.
  */

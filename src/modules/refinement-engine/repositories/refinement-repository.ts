@@ -30,6 +30,16 @@ export class RefinementRepository {
     return job || null;
   }
 
+  async getLatestJobForManuscript(manuscriptId: string): Promise<RefinementJobRecord | null> {
+    const job = db
+      .select()
+      .from(refinementJobs)
+      .where(eq(refinementJobs.manuscriptId, manuscriptId))
+      .orderBy(desc(refinementJobs.createdAt))
+      .get();
+    return job || null;
+  }
+
   async getJobWithChunks(
     jobId: string
   ): Promise<{ job: RefinementJobRecord; chunks: RefinementChunkRecord[] } | null> {
