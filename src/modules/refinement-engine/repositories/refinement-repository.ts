@@ -77,10 +77,33 @@ export class RefinementRepository {
   }
 
   async recordConsent(manuscriptId: string, consentedAt: Date = new Date()): Promise<void> {
-    db.update(manuscripts)
-      .set({ refinementConsentAt: consentedAt, updatedAt: new Date() })
+    const existing = db
+      .select({ id: manuscripts.id })
+      .from(manuscripts)
       .where(eq(manuscripts.id, manuscriptId))
-      .run();
+      .get();
+
+    if (!existing) {
+      db.insert(manuscripts)
+        .values({
+          id: manuscriptId,
+          title: 'Active Working Manuscript',
+          sourceType: 'text',
+          pageCount: 1,
+          pageCountConfidence: 'estimated',
+          wordCount: 0,
+          ocrUsed: false,
+          refinementConsentAt: consentedAt,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .run();
+    } else {
+      db.update(manuscripts)
+        .set({ refinementConsentAt: consentedAt, updatedAt: new Date() })
+        .where(eq(manuscripts.id, manuscriptId))
+        .run();
+    }
   }
 
   async hasConsent(manuscriptId: string): Promise<boolean> {

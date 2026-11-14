@@ -75,7 +75,7 @@ async function main() {
     originalFilename: 'ai_generated_hypertension_trial.pdf',
   });
 
-  console.log(`[INGEST] PDF Parsed: ${parsedPdf.pageCount} page(s), ${parsedPdf.sections.length} section(s), ${parsedPdf.wordCount} words.`);
+  console.log(`[INGEST] PDF Parsed: ${parsedPdf.pageCount} page(s), ${parsedPdf.sections.length} section(s).`);
 
   // Humanize each parsed section according to natural-writing-style
   const humanizedPdfSections = parsedPdf.sections.map((sec, idx) => {
@@ -187,7 +187,7 @@ In conclusion, canagliflozin provides profound organ protection in diabetic neph
     server.close();
   }
 
-  console.log(`[INGEST] URL Article Parsed: ${parsedUrl.sections.length} section(s), ${parsedUrl.wordCount} words.`);
+  console.log(`[INGEST] URL Article Parsed: ${parsedUrl.sections.length} section(s).`);
 
   // Humanize the URL article using natural writing style craft rules:
   // - Kill empty hedges ("It is widely acknowledged that", "Furthermore", "In conclusion")
@@ -220,7 +220,7 @@ In conclusion, canagliflozin provides profound organ protection in diabetic neph
 **Manuscript ID**: ${urlManuscriptId}  
 **Source Type**: Web Article / URL Extraction  
 **Title**: SGLT2 Inhibition and Cardiorenal Outcomes in Type 2 Diabetes  
-**Total Sections**: ${parsedUrl.sections.length} | **Word Count**: ${parsedUrl.wordCount}  
+**Total Sections**: ${parsedUrl.sections.length}  
 **Tone & Style**: Active Clinical Investigator Voice (Natural Cadence, Zero Robotic Padding)  
 
 ---
@@ -269,7 +269,7 @@ In conclusion, endovascular intervention markedly enhances neurological recovery
     text: rawAiPastedText,
   });
 
-  console.log(`[INGEST] Pasted Text Parsed: ${parsedText.sections.length} section(s), ${parsedText.wordCount} words.`);
+  console.log(`[INGEST] Pasted Text Parsed: ${parsedText.sections.length} section(s).`);
 
   // Humanize using natural-writing-style:
   // - Break symmetrical 3-part lists ("effective, reliable, and comprehensive")
@@ -306,7 +306,7 @@ In conclusion, endovascular intervention markedly enhances neurological recovery
 **Manuscript ID**: ${textManuscriptId}  
 **Source Type**: Raw Pasted Text Intake  
 **Title**: Endovascular Thrombectomy in Large Vessel Stroke  
-**Sections Decomposed**: ${parsedText.sections.length} | **Word Count**: ${parsedText.wordCount}  
+**Sections Decomposed**: ${parsedText.sections.length}  
 **Humanization Standard**: Deep Syntactic Variation, Active Voice, Strict Medical Integrity  
 
 ---

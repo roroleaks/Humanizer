@@ -4,9 +4,11 @@ import { refinementEngine } from '@/modules/refinement-engine';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  const { id: manuscriptId } = await params;
+  const resolvedParams = await context.params;
+  const manuscriptId =
+    resolvedParams?.id || request.nextUrl.pathname.split('/')[3] || 'active_manuscript';
 
   // 1. Consent verification (mandatory pre-condition)
   const hasConsent = await refinementRepository.hasConsent(manuscriptId);

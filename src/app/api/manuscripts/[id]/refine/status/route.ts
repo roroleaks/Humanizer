@@ -3,9 +3,9 @@ import { refinementEngine } from '@/modules/refinement-engine';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  await params; // Consume params
+  await context.params; // Consume params
   const { searchParams } = new URL(request.url);
   const jobId = searchParams.get('jobId');
 

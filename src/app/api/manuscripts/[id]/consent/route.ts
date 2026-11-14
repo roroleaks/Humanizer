@@ -7,9 +7,11 @@ const consentRateLimiter = new Map<string, number>();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  const { id: manuscriptId } = await params;
+  const resolvedParams = await context.params;
+  const manuscriptId =
+    resolvedParams?.id || request.nextUrl.pathname.split('/')[3] || 'active_manuscript';
   const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
   const now = Date.now();
 
@@ -30,18 +32,23 @@ export async function POST(
     const consentedDate = new Date();
     await refinementRepository.recordConsent(manuscriptId, consentedDate);
 
-    // Record processing event without manuscript content
-    await processingEventRepository.logEvent(
-      manuscriptId,
-      'refinement_consent_granted',
-      'info',
-      `Consent granted for refinement via primary provider ${primaryProvider}. Fallbacks: ${fallbacks.join(', ')}.`
-    );
+    // Record processing event without manuscript content (non-fatal if foreign keys differ across Lambdas)
+    try {
+      await processingEventRepository.logEvent(
+        manuscriptId,
+        'refinement_consent_granted',
+        'info',
+        `Consent granted for refinement via primary provider ${primaryProvider}. Fallbacks: ${fallbacks.join(', ')}.`
+      );
+    } catch (logError) {
+      console.warn('Non-fatal event log failure during consent:', logError);
+    }
 
     return NextResponse.json({
       consentedAt: consentedDate.toISOString(),
     });
   } catch (error: any) {
+    console.error('Consent recording error:', error);
     return NextResponse.json(
       { error: 'CONSENT_FAILED', message: error?.message || 'Failed to record consent' },
       { status: 500 }
