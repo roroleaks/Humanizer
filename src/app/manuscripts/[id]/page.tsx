@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
   FileText,
@@ -95,9 +96,10 @@ const PROVIDER_OPTIONS: { value: AIProviderName; label: string; privacyUrl: stri
 export default function ManuscriptDetailPage({
   params,
 }: {
-  params: { id: string };
+  params?: { id?: string };
 }) {
-  const { id } = params;
+  const routeParams = useParams();
+  const id = (routeParams?.id as string) || params?.id || '';
 
   const [manuscript, setManuscript] = useState<ManuscriptDetail | null>(null);
   const [sections, setSections] = useState<SectionItem[]>([]);
@@ -141,6 +143,7 @@ export default function ManuscriptDetailPage({
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const loadData = React.useCallback(async () => {
+    if (!id) return;
     setIsLoading(true);
     try {
       const res = await fetch(`/api/manuscripts/${id}`);
