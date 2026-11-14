@@ -95,9 +95,9 @@ const PROVIDER_OPTIONS: { value: AIProviderName; label: string; privacyUrl: stri
 export default function ManuscriptDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = React.use(params);
+  const { id } = params;
 
   const [manuscript, setManuscript] = useState<ManuscriptDetail | null>(null);
   const [sections, setSections] = useState<SectionItem[]>([]);
