@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Plus, Files, FileText, Globe, File, ArrowRight, Clock, BookOpen } from 'lucide-react';
+import { Search, Filter, Plus, Files, FileText, Globe, File, ArrowRight, Clock, BookOpen, Download } from 'lucide-react';
 import { PageHeader, EmptyState } from '@/components/shared';
 
 interface ManuscriptItem {
@@ -237,6 +237,21 @@ export default function ManuscriptsPage() {
 
                 <div className="flex items-center gap-3">
                   {renderRefinementStatusBadge(item.status)}
+                  {item.status === 'refined' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(`/api/manuscripts/${item.id}/export/docx`, '_blank');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-xs"
+                      title="Download publication-grade Word document"
+                    >
+                      <Download className="w-3.5 h-3.5 text-teal-600" />
+                      <span className="hidden sm:inline">DOCX</span>
+                    </button>
+                  )}
                   <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-teal-accent group-hover:bg-teal-50 transition-colors">
                     <ArrowRight className="w-4 h-4" />
                   </div>

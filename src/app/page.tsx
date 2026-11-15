@@ -75,6 +75,21 @@ export default function DashboardPage() {
             Refine scientific manuscripts into fluent, publication-quality English while preserving every numerical value, clinical finding, statistical qualifier, and citation.
           </p>
 
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-300">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+              <span>Vancouver & ICMJE Compliant</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15">
+              <Scale className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Deterministic Number Guard</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15">
+              <Download className="w-3.5 h-3.5 text-teal-300" />
+              <span>Publication-Grade DOCX</span>
+            </span>
+          </div>
+
           <div className="pt-3 flex flex-wrap items-center gap-4">
             <Link
               href="/new"

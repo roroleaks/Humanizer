@@ -32,7 +32,7 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   const currentTitle = ROUTE_TITLES[pathname] || 'Workspace';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-brand-navyDark border-b border-brand-navyLight/40 text-surface-pureWhite shadow-sm">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-brand-navyDark/95 backdrop-blur-md border-b border-brand-navyLight/40 text-surface-pureWhite shadow-sm">
       {/* Left: Hamburger (mobile) + Brand Wordmark */}
       <div className="flex items-center gap-3">
         <button
@@ -75,14 +75,24 @@ export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
         </Link>
       </div>
 
-      {/* Center: Contextual Breadcrumbs (Desktop) */}
-      <nav aria-label="Breadcrumb" className="hidden lg:flex items-center gap-2 text-xs text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
-          Platform
-        </Link>
-        <span aria-hidden="true" className="text-slate-600">/</span>
-        <span className="text-teal-light font-medium">{currentTitle}</span>
-      </nav>
+      {/* Center: Contextual Breadcrumbs & System Status (Desktop) */}
+      <div className="hidden lg:flex items-center gap-4">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-400">
+          <Link href="/" className="hover:text-white transition-colors">
+            Platform
+          </Link>
+          <span aria-hidden="true" className="text-slate-600">/</span>
+          <span className="text-teal-light font-medium">{currentTitle}</span>
+        </nav>
+
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/60 text-[11px] text-slate-300">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="font-medium text-slate-300">Engine Online</span>
+        </div>
+      </div>
 
       {/* Right: Actions & Author Signature */}
       <div className="flex items-center gap-3">

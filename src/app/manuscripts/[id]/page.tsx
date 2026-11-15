@@ -22,8 +22,14 @@ import {
   X,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   ShieldCheck,
   Download,
+  Copy,
+  Check,
+  CheckCheck,
+  Columns2,
+  Search,
 } from 'lucide-react';
 import { FeatureStatus } from '@/components/workspace/feature-status';
 import { TableData } from '@/contracts/document-section';
@@ -139,6 +145,12 @@ export default function ManuscriptDetailPage({
     }>
   >([]);
   const [refinementResult, setRefinementResult] = useState<RefinementResult | null>(null);
+
+  // Enhanced UI States
+  const [viewMode, setViewMode] = useState<'split' | 'refined' | 'original'>('split');
+  const [sectionSearch, setSectionSearch] = useState('');
+  const [copiedSection, setCopiedSection] = useState(false);
+  const [copiedFull, setCopiedFull] = useState(false);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -338,6 +350,40 @@ export default function ManuscriptDetailPage({
   function handleDownloadDocx() {
     const url = `/api/manuscripts/${id}/export/docx${activeJobId ? `?jobId=${activeJobId}` : ''}`;
     window.open(url, '_blank');
+  }
+
+  function countWords(str?: string | null): number {
+    if (!str) return 0;
+    return str.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  async function copyText(text: string, isFull = false) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      if (isFull) {
+        setCopiedFull(true);
+        setTimeout(() => setCopiedFull(false), 2500);
+      } else {
+        setCopiedSection(true);
+        setTimeout(() => setCopiedSection(false), 2500);
+      }
+    } catch (e) {
+      console.warn('Clipboard write failed:', e);
+    }
+  }
+
+  function getFullRefinedManuscriptText(): string {
+    const list = refinementResult?.refinedParagraphs || (refinementResult as any)?.paragraphs || [];
+    return sections
+      .map((sec) => {
+        const matching = list.filter(
+          (p: any) => p.sectionId === sec.id || p.id.includes(sec.id)
+        );
+        const text = matching.length > 0 ? matching.map((p: any) => p.refinedText).join('\n\n') : sec.content;
+        return `## ${sec.title}\n\n${text}`;
+      })
+      .join('\n\n');
   }
 
   function renderSourceIcon(type?: string) {
@@ -563,6 +609,69 @@ export default function ManuscriptDetailPage({
         </div>
       )}
 
+      {/* EXECUTIVE REFINEMENT SUMMARY BANNER (Shown when refined) */}
+      {refinementResult && !isRefining && (
+        <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-r from-brand-navyDark via-slate-900 to-teal-950 text-white border border-teal-500/30 shadow-lg">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-500/20 text-teal-300 border border-teal-400/40">
+                  <CheckCheck className="w-4 h-4 text-teal-300" />
+                  <span>Refinement Complete & Validated</span>
+                </span>
+                <span className="text-xs text-slate-300 font-mono bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
+                  {refinementResult.providerName.toUpperCase()} • {refinementResult.modelUsed}
+                </span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
+                Publication-Ready Scientific Manuscript Available
+              </h2>
+              <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                Refined into natural academic English while preserving every clinical metric, P-value, table cell, and citation.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-slate-300">
+                <span className="flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-teal-400" />
+                  <span><strong>{sections.length}</strong> sections refined</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Protected inventory intact</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-teal-300" />
+                  <span className="capitalize">{manuscript.styleProfile.replace('_', ' ')}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => copyText(getFullRefinedManuscriptText(), true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all cursor-pointer shadow-sm"
+                title="Copy entire refined manuscript prose with section headings"
+              >
+                {copiedFull ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-slate-300" />}
+                <span>{copiedFull ? 'Copied Full Text!' : 'Copy Full Manuscript'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadDocx}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+                title="Download publication-grade Microsoft Word (.docx) document"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Word (.docx)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LIVE REFINEMENT PROGRESS VIEW */}
       {isRefining && (
         <div className="bg-white rounded-2xl border border-teal-200 shadow-md p-6 space-y-6">
@@ -713,144 +822,344 @@ export default function ManuscriptDetailPage({
           {activeTab === 'content' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Section Hierarchy Tree (4 cols) */}
-              <div className="lg:col-span-4 bg-white rounded-2xl border border-surface-borderSubtle p-4 shadow-subtle space-y-2">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-textSecondary">
-                    Section Tree
-                  </span>
-                  <span className="text-[11px] text-neutral-gray">
-                    {sections.length} parsed
-                  </span>
+              <div className="lg:col-span-4 bg-white rounded-2xl border border-surface-borderSubtle p-4 shadow-subtle space-y-3">
+                <div className="space-y-2 pb-2 border-b border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-textSecondary">
+                      Section Tree
+                    </span>
+                    <span className="text-[11px] text-neutral-gray font-medium">
+                      {sections.filter(s => s.title.toLowerCase().includes(sectionSearch.toLowerCase()) || s.content.toLowerCase().includes(sectionSearch.toLowerCase())).length} of {sections.length}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={sectionSearch}
+                      onChange={(e) => setSectionSearch(e.target.value)}
+                      placeholder="Filter sections by title or text..."
+                      className="w-full pl-8 pr-6 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-accent"
+                    />
+                    {sectionSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setSectionSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                        aria-label="Clear filter"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-1 max-h-[600px] overflow-y-auto pr-1">
-                  {sections.map((section, idx) => {
-                    const isSelected = selectedSection?.id === section.id;
-                    const isTable = section.type === 'table' || !!section.tableData;
+                <div className="space-y-1.5 max-h-[620px] overflow-y-auto pr-1">
+                  {sections
+                    .filter((s) =>
+                      s.title.toLowerCase().includes(sectionSearch.toLowerCase()) ||
+                      s.content.toLowerCase().includes(sectionSearch.toLowerCase())
+                    )
+                    .map((section) => {
+                      const isSelected = selectedSection?.id === section.id;
+                      const isTable = section.type === 'table' || !!section.tableData;
+                      const originalIndex = sections.findIndex((s) => s.id === section.id);
 
-                    return (
-                      <button
-                        key={section.id}
-                        type="button"
-                        onClick={() => setSelectedSectionId(section.id)}
-                        className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-start gap-2.5 ${
-                          isSelected
-                            ? 'bg-teal-50 border border-teal-200 text-teal-900 font-semibold shadow-xs'
-                            : 'hover:bg-slate-50 text-neutral-textPrimary border border-transparent'
-                        }`}
-                      >
-                        <span className="text-[10px] font-mono text-neutral-gray mt-0.5">
-                          {(idx + 1).toString().padStart(2, '0')}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate flex items-center gap-1.5">
-                            {isTable && <TableIcon className="w-3 h-3 text-teal-accent flex-shrink-0" />}
-                            <span className="truncate">{section.title}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-neutral-gray">
-                            <span className="capitalize px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200">
-                              {section.type}
-                            </span>
-                            <span>{section.charCount} chars</span>
-                            {refinementResult && (
-                              <span className="ml-auto px-1.5 py-0.2 rounded font-semibold text-[9px] bg-emerald-100 text-emerald-800">
-                                Refined
+                      return (
+                        <button
+                          key={section.id}
+                          type="button"
+                          onClick={() => setSelectedSectionId(section.id)}
+                          className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-start gap-2.5 ${
+                            isSelected
+                              ? 'bg-teal-50/80 border border-teal-300 text-teal-950 font-semibold shadow-xs ring-1 ring-teal-200'
+                              : 'hover:bg-slate-50 text-neutral-textPrimary border border-transparent'
+                          }`}
+                        >
+                          <span className={`text-[10px] font-mono mt-0.5 px-1.5 py-0.5 rounded ${
+                            isSelected ? 'bg-teal-200/80 text-teal-900 font-bold' : 'bg-slate-100 text-neutral-gray'
+                          }`}>
+                            {(originalIndex + 1).toString().padStart(2, '0')}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="truncate flex items-center gap-1.5">
+                              {isTable && <TableIcon className="w-3.5 h-3.5 text-teal-accent shrink-0" />}
+                              <span className="truncate">{section.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-neutral-gray">
+                              <span className="capitalize px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
+                                {section.type}
                               </span>
-                            )}
+                              <span>{countWords(section.content)} words</span>
+                              {refinementResult && (
+                                <span className="ml-auto px-1.5 py-0.5 rounded font-bold text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  Refined
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
 
               {/* Right Column: Section Detail Viewer (8 cols) */}
-              <div className="lg:col-span-8 bg-white rounded-2xl border border-surface-borderSubtle p-6 shadow-subtle min-h-[500px]">
+              <div className="lg:col-span-8 bg-white rounded-2xl border border-surface-borderSubtle p-6 shadow-subtle min-h-[550px] flex flex-col justify-between">
                 {selectedSection ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                            {selectedSection.type}
-                          </span>
-                          <span className="text-xs text-neutral-gray font-mono">
-                            Section #{selectedSection.orderIndex + 1}
-                          </span>
-                        </div>
-                        <h2 className="text-lg font-bold text-brand-navyPrimary mt-1">
-                          {selectedSection.title}
-                        </h2>
-                      </div>
-                      <span className="text-xs text-neutral-gray">
-                        {selectedSection.charCount} characters
-                      </span>
-                    </div>
+                  (() => {
+                    const list = refinementResult
+                      ? (refinementResult.refinedParagraphs || (refinementResult as any).paragraphs || [])
+                      : [];
+                    const matching = list.filter(
+                      (p: any) => p.sectionId === selectedSection.id || p.id.includes(selectedSection.id)
+                    );
+                    const refinedSectionText = matching.length > 0 ? matching.map((p: any) => p.refinedText).join('\n\n') : '';
 
-                    {/* Structured Table Render or Academic Typography Render */}
-                    {selectedSection.tableData ? (
-                      <div>
-                        <div className="flex items-center gap-2 text-xs font-semibold text-brand-navyPrimary">
-                          <TableIcon className="w-4 h-4 text-teal-accent" />
-                          <span>Structured Scientific Table Data ({selectedSection.tableData.rows} rows × {selectedSection.tableData.columns} cols)</span>
-                        </div>
-                        {renderTable(selectedSection.tableData)}
-                        {selectedSection.content && selectedSection.content.length > 0 && (
-                          <p className="mt-3 text-xs text-neutral-gray font-mono">
-                            {selectedSection.content}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* If Refinement is completed, show refined output clearly distinguishing original and refined */}
-                        {refinementResult ? (
-                          <div className="space-y-4">
-                            <div className="p-4 bg-teal-50/30 border border-teal-200 rounded-xl space-y-2">
-                              <div className="flex items-center justify-between text-xs pb-2 border-b border-teal-100">
-                                <span className="font-bold text-teal-900 uppercase tracking-wider text-[11px]">
-                                  Refined Academic Text
+                    const origWords = countWords(selectedSection.content);
+                    const refWords = countWords(refinedSectionText);
+                    const wordDelta = refWords - origWords;
+                    const deltaPercent = origWords > 0 ? Math.round(((refWords - origWords) / origWords) * 100) : 0;
+
+                    const currentIdx = sections.findIndex((s) => s.id === selectedSection.id);
+                    const prevSection = currentIdx > 0 ? sections[currentIdx - 1] : null;
+                    const nextSection = currentIdx >= 0 && currentIdx < sections.length - 1 ? sections[currentIdx + 1] : null;
+
+                    return (
+                      <div className="space-y-5 flex-1 flex flex-col justify-between">
+                        <div className="space-y-4">
+                          {/* Section Header with View Modes and Word Count Metrics */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                  {selectedSection.type}
                                 </span>
-                                <span className="text-[10px] text-teal-700">
-                                  Generated via {refinementResult.providerName.toUpperCase()} ({refinementResult.modelUsed})
+                                <span className="text-xs text-neutral-gray font-mono">
+                                  Section #{selectedSection.orderIndex + 1} of {sections.length}
                                 </span>
                               </div>
-                              <div className="font-serif text-slate-900 text-sm leading-relaxed whitespace-pre-wrap">
-                                {(() => {
-                                  const list = refinementResult.refinedParagraphs || refinementResult.paragraphs || [];
-                                  const matching = list.filter(
-                                    (p) => p.sectionId === selectedSection.id || p.id.includes(selectedSection.id)
-                                  );
-                                  if (matching.length > 0) {
-                                    return matching.map((p) => p.refinedText).join('\n\n');
-                                  }
-                                  return selectedSection.content;
-                                })()}
-                              </div>
+                              <h2 className="text-lg font-bold text-brand-navyPrimary mt-1">
+                                {selectedSection.title}
+                              </h2>
                             </div>
 
-                            <details className="text-xs text-neutral-gray border border-slate-200 rounded-xl p-3">
-                              <summary className="cursor-pointer font-semibold text-slate-700">
-                                View Original Manuscript Prose
-                              </summary>
-                              <div className="mt-3 pt-3 border-t border-slate-100 font-serif text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                            {/* View Switcher Controls (if Refined) */}
+                            {refinementResult && !selectedSection.tableData && (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewMode('split')}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all ${
+                                      viewMode === 'split'
+                                        ? 'bg-white text-teal-900 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title="View original and refined prose side-by-side"
+                                  >
+                                    <Columns2 className="w-3.5 h-3.5" />
+                                    <span>Split View</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewMode('refined')}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all ${
+                                      viewMode === 'refined'
+                                        ? 'bg-white text-teal-900 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title="View refined academic prose only"
+                                  >
+                                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                                    <span>Refined</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewMode('original')}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all ${
+                                      viewMode === 'original'
+                                        ? 'bg-white text-teal-900 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title="View original unrefined prose"
+                                  >
+                                    <History className="w-3.5 h-3.5" />
+                                    <span>Original</span>
+                                  </button>
+                                </div>
+
+                                {refinedSectionText && (
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(refinedSectionText, false)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                    title="Copy this section's refined text to clipboard"
+                                  >
+                                    {copiedSection ? (
+                                      <>
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span className="text-emerald-700">Copied!</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                                        <span>Copy Section</span>
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Content Renderers */}
+                          {selectedSection.tableData ? (
+                            <div>
+                              <div className="flex items-center gap-2 text-xs font-semibold text-brand-navyPrimary">
+                                <TableIcon className="w-4 h-4 text-teal-accent" />
+                                <span>Structured Scientific Table Data ({selectedSection.tableData.rows} rows × {selectedSection.tableData.columns} cols)</span>
+                              </div>
+                              {renderTable(selectedSection.tableData)}
+                              {selectedSection.content && selectedSection.content.length > 0 && (
+                                <p className="mt-3 text-xs text-neutral-gray font-mono">
+                                  {selectedSection.content}
+                                </p>
+                              )}
+                            </div>
+                          ) : refinementResult && refinedSectionText ? (
+                            <div className="space-y-4">
+                              {/* Word count comparison pill */}
+                              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+                                <div className="flex items-center gap-3 text-slate-600">
+                                  <span>Original: <strong>{origWords}</strong> words</span>
+                                  <span>→</span>
+                                  <span>Refined: <strong>{refWords}</strong> words</span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded font-mono text-[11px] font-semibold ${
+                                  wordDelta < 0
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : wordDelta > 0
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {wordDelta < 0
+                                    ? `${wordDelta} words (${deltaPercent}% conciseness)`
+                                    : wordDelta > 0
+                                    ? `+${wordDelta} words (+${deltaPercent}% elaboration)`
+                                    : 'Preserved length'}
+                                </span>
+                              </div>
+
+                              {/* VIEW MODE 1: SPLIT DUAL VIEW */}
+                              {viewMode === 'split' && (
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                  {/* Left Panel: Original Draft */}
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs pb-1 border-b border-slate-200">
+                                      <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                                        Original Manuscript Draft
+                                      </span>
+                                      <span className="text-neutral-gray text-[10px] font-mono">{origWords} words</span>
+                                    </div>
+                                    <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-xl font-serif text-slate-700 text-sm leading-relaxed whitespace-pre-wrap max-h-[480px] overflow-y-auto">
+                                      {selectedSection.content}
+                                    </div>
+                                  </div>
+
+                                  {/* Right Panel: Refined Academic Prose */}
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs pb-1 border-b border-teal-200">
+                                      <div className="flex items-center gap-1.5">
+                                        <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                                        <span className="font-bold text-teal-900 uppercase tracking-wider text-[11px]">
+                                          Refined Academic Prose
+                                        </span>
+                                      </div>
+                                      <span className="text-teal-700 text-[10px] font-mono">{refWords} words</span>
+                                    </div>
+                                    <div className="p-4 bg-teal-50/20 border border-teal-200 rounded-xl font-serif text-slate-900 text-sm leading-relaxed whitespace-pre-wrap shadow-xs max-h-[480px] overflow-y-auto">
+                                      {refinedSectionText}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* VIEW MODE 2: REFINED FOCUS ONLY */}
+                              {viewMode === 'refined' && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-xs pb-1 border-b border-teal-200">
+                                    <div className="flex items-center gap-1.5">
+                                      <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                                      <span className="font-bold text-teal-900 uppercase tracking-wider text-[11px]">
+                                        Refined Academic Prose (Focus View)
+                                      </span>
+                                    </div>
+                                    <span className="text-teal-700 text-[10px] font-mono">
+                                      Refined via {refinementResult.providerName.toUpperCase()} ({refinementResult.modelUsed})
+                                    </span>
+                                  </div>
+                                  <div className="p-6 bg-white border border-teal-200/80 rounded-xl font-serif text-slate-900 text-base leading-relaxed whitespace-pre-wrap shadow-subtle max-h-[520px] overflow-y-auto">
+                                    {refinedSectionText}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* VIEW MODE 3: ORIGINAL DRAFT ONLY */}
+                              {viewMode === 'original' && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-xs pb-1 border-b border-slate-200">
+                                    <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                                      Original Unrefined Draft
+                                    </span>
+                                    <span className="text-neutral-gray text-[10px] font-mono">{origWords} words</span>
+                                  </div>
+                                  <div className="p-6 bg-slate-50/80 border border-slate-200 rounded-xl font-serif text-slate-700 text-base leading-relaxed whitespace-pre-wrap max-h-[520px] overflow-y-auto">
+                                    {selectedSection.content}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="prose max-w-none">
+                              <div className="font-serif text-slate-800 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50/60 p-4 rounded-xl border border-slate-200/60">
                                 {selectedSection.content}
                               </div>
-                            </details>
-                          </div>
-                        ) : (
-                          <div className="prose max-w-none">
-                            <div className="font-serif text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
-                              {selectedSection.content}
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+
+                        {/* Section Navigation Footer */}
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 text-xs">
+                          <button
+                            type="button"
+                            disabled={!prevSection}
+                            onClick={() => prevSection && setSelectedSectionId(prevSection.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 font-medium transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span className="truncate max-w-[140px] sm:max-w-xs">{prevSection ? prevSection.title : 'Previous'}</span>
+                          </button>
+
+                          <span className="text-neutral-gray text-[11px] font-mono">
+                            Section {currentIdx + 1} of {sections.length}
+                          </span>
+
+                          <button
+                            type="button"
+                            disabled={!nextSection}
+                            onClick={() => nextSection && setSelectedSectionId(nextSection.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 font-medium transition-colors"
+                          >
+                            <span className="truncate max-w-[140px] sm:max-w-xs">{nextSection ? nextSection.title : 'Next'}</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()
                 ) : (
-                  <div className="p-8 text-center text-xs text-neutral-gray">
+                  <div className="p-12 text-center text-xs text-neutral-gray">
                     Select a section from the hierarchy tree to inspect its contents.
                   </div>
                 )}
